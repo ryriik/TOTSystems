@@ -26,6 +26,9 @@
 ### POST /securities
 Создание ценной бумаги. В теле запроса передать JSON объект типа Security.
 
+### POST /securities/import
+Импорт ценных бумаг из файлов.
+
 ### PUT /securities/{secId}
 Обновление ценной бумаги по secid. В теле запроса передать JSON объект типа Security.
 
@@ -39,14 +42,17 @@
 Вывод истории по id.
 
 ### POST /history
-Создание истории операций ценной бумаги. В теле запроса передать JSON объект типа History.
+Создание истории. В теле запроса передать JSON-объект типа History.
+
+### POST /history/import
+Импорт истории из файлов.
 
 ### PUT /history/{id}
-Обновление истории операций ценной бумаги по id. В теле запроса передать JSON объект типа History.
+Обновление истории по id. В теле запроса передать JSON-объект типа History.
 
 ### DELETE /history/{id}
-Удаление истории операций ценной бумаги по id.
+Удаление истории по id.
 
 ### GET /history/dop?sort_by=""&emitent_title=""&trade_date=""
-Вывод всей истории операций по всем ценным бумагам с опциональными параметрами emitent_title и trade_date для фильтрации и sort_by для сортировки.
+Вывод всей истории с опциональными параметрами emitent_title и trade_date для фильтрации и sort_by для сортировки.
 Выводятся теги secid, regnumber, name, emitent_title, tradedate, numtrades, open, close (для п.4 задания).
