@@ -20,6 +20,8 @@ public interface HistoryRepository extends JpaRepository<History, Long> {
 
     List<History> findAllBySecIdAndTradeDate(Security secId, LocalDate tradeDate);
 
+    List<History> findAllByBoardIdAndSecIdAndTradeDate(String boardId, Security secId, LocalDate tradeDate);
+
     @Query("SELECT s.secId, s.regNumber, s.name, s.emitentTitle, h.tradeDate, h.numTrades, h.open, h.close " +
             "FROM Security s JOIN History h ON s.secId = h.secId")
     List<?> findAllDop(Sort sortBy);

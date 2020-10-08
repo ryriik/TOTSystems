@@ -1,48 +1,42 @@
 package ru.totsystems.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.xml.sax.SAXException;
 import ru.totsystems.dto.HistoryDto;
+import ru.totsystems.dto.SecurityDto;
 import ru.totsystems.exception.HistoryNotFoundException;
-import ru.totsystems.exception.SecurityNotFoundException;
 import ru.totsystems.model.History;
 import ru.totsystems.model.Security;
 import ru.totsystems.repository.HistoryRepository;
-import ru.totsystems.repository.SecurityRepository;
 
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class HistoryService {
 
-    @Autowired
-    private XmlParser xmlParser;
-
     private final HistoryRepository historyRepository;
-    private final SecurityRepository securityRepository;
+    private final SecurityService securityService;
 
-    public HistoryService(HistoryRepository historyRepository, SecurityRepository securityRepository) {
+    public HistoryService(HistoryRepository historyRepository, SecurityService securityService) {
         this.historyRepository = historyRepository;
-        this.securityRepository = securityRepository;
+        this.securityService = securityService;
     }
 
-    public void create(HistoryDto historyDto) throws IOException, ParserConfigurationException, SAXException {
-        Optional<Security> security = securityRepository.findBySecId(historyDto.getSecId());
-        if (security.isPresent()) {
-            historyRepository.save(convertDtoToEntity(historyDto));
-        } else {
-            security = xmlParser.loadSecurityFromMoex(historyDto.getSecId());
-            if (security.isPresent()) {
-                historyRepository.save(convertDtoToEntity(historyDto));
-            }
-        }
+    public void create(HistoryDto historyDto) {
+        securityService.get(historyDto.getSecId());
+        historyRepository.save(convertDtoToEntity(historyDto));
+    }
+
+    public void importAll(List<HistoryDto> historyDto) {
+        List<History> historyList = historyDto.stream().map(this::convertDtoToEntity).collect(Collectors.toList());
+        List<History> uniqueHistory = historyList.stream()
+                .filter(history -> historyRepository.findAllByBoardIdAndSecIdAndTradeDate(
+                        history.getBoardId(), history.getSecId(), history.getTradeDate())
+                        .isEmpty())
+                .collect(Collectors.toList());
+        historyRepository.saveAll(uniqueHistory);
     }
 
     public HistoryDto get(Long id) {
@@ -57,12 +51,11 @@ public class HistoryService {
     }
 
     public List<HistoryDto> getAllBySecId(String secId) {
-        Optional<Security> security = securityRepository.findBySecId(secId);
-        if (security.isPresent()) {
-            return historyRepository.findAllBySecId(security.get()).stream()
-                    .map(this::convertEntityToDto)
-                    .collect(Collectors.toList());
-        } else throw new SecurityNotFoundException();
+        SecurityDto securityDto = securityService.get(secId);
+        return historyRepository.findAllBySecId(securityService.convertDtoToEntity(securityDto)).stream()
+                .map(this::convertEntityToDto)
+                .collect(Collectors.toList());
+
     }
 
     public List<HistoryDto> getAllByTradeDate(LocalDate tradeDate) {
@@ -72,12 +65,10 @@ public class HistoryService {
     }
 
     public List<HistoryDto> getAllBySecIdAndTradeDate(String secId, LocalDate tradeDate) {
-        Optional<Security> security = securityRepository.findBySecId(secId);
-        if (security.isPresent()) {
-            return historyRepository.findAllBySecIdAndTradeDate(security.get(), tradeDate).stream()
-                    .map(this::convertEntityToDto)
-                    .collect(Collectors.toList());
-        } else throw new SecurityNotFoundException();
+        SecurityDto securityDto = securityService.get(secId);
+        return historyRepository.findAllBySecIdAndTradeDate(securityService.convertDtoToEntity(securityDto), tradeDate).stream()
+                .map(this::convertEntityToDto)
+                .collect(Collectors.toList());
     }
 
     public List<?> getAllDop(String sortBy) {
@@ -96,19 +87,20 @@ public class HistoryService {
         return historyRepository.findAllDopByEmitentTitleAndTradeDate(emitentTitle, tradeDate, Sort.by(sortBy));
     }
 
-    public void update(Long id, HistoryDto historyDto) {
+    public void update(Long id, HistoryDto newHistory) {
         History history = convertDtoToEntity(get(id));
 
-        history.setBoardId(historyDto.getBoardId());
-        history.setShortName(historyDto.getShortName());
-        history.setTradeDate(historyDto.getTradeDate());
-        history.setNumTrades(historyDto.getNumTrades());
-        history.setValue(historyDto.getValue());
-        history.setVolume(historyDto.getVolume());
-        history.setOpen(historyDto.getOpen());
-        history.setClose(historyDto.getClose());
-        history.setLow(historyDto.getLow());
-        history.setHigh(historyDto.getHigh());
+        history.setBoardId(newHistory.getBoardId());
+        history.setSecId(securityService.convertDtoToEntity(securityService.get(newHistory.getSecId())));
+        history.setShortName(newHistory.getShortName());
+        history.setTradeDate(newHistory.getTradeDate());
+        history.setNumTrades(newHistory.getNumTrades());
+        history.setValue(newHistory.getValue());
+        history.setVolume(newHistory.getVolume());
+        history.setOpen(newHistory.getOpen());
+        history.setClose(newHistory.getClose());
+        history.setLow(newHistory.getLow());
+        history.setHigh(newHistory.getHigh());
 
         historyRepository.save(history);
     }
@@ -135,23 +127,19 @@ public class HistoryService {
     }
 
     private History convertDtoToEntity(HistoryDto historyDto) {
-        Optional<Security> security = securityRepository.findBySecId(historyDto.getSecId());
-        if (security.isPresent()) {
-            History history = new History();
-            history.setBoardId(historyDto.getBoardId());
-            history.setSecId(security.get());
-            history.setShortName(historyDto.getShortName());
-            history.setTradeDate(historyDto.getTradeDate());
-            history.setNumTrades(historyDto.getNumTrades());
-            history.setValue(historyDto.getValue());
-            history.setVolume(historyDto.getVolume());
-            history.setOpen(historyDto.getOpen());
-            history.setClose(historyDto.getClose());
-            history.setLow(historyDto.getLow());
-            history.setHigh(historyDto.getHigh());
-            return history;
-        } else {
-            throw new SecurityNotFoundException();
-        }
+        History history = new History();
+        Security security = securityService.convertDtoToEntity(securityService.get(historyDto.getSecId()));
+        history.setBoardId(historyDto.getBoardId());
+        history.setSecId(security);
+        history.setShortName(historyDto.getShortName());
+        history.setTradeDate(historyDto.getTradeDate());
+        history.setNumTrades(historyDto.getNumTrades());
+        history.setValue(historyDto.getValue());
+        history.setVolume(historyDto.getVolume());
+        history.setOpen(historyDto.getOpen());
+        history.setClose(historyDto.getClose());
+        history.setLow(historyDto.getLow());
+        history.setHigh(historyDto.getHigh());
+        return history;
     }
 }

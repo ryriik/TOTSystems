@@ -7,12 +7,13 @@ import org.springframework.web.multipart.MultipartFile;
 import org.xml.sax.SAXException;
 import ru.totsystems.dto.HistoryDto;
 import ru.totsystems.service.HistoryService;
-import ru.totsystems.service.XmlParser;
 
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+
+import static ru.totsystems.service.XmlParser.parseHistory;
 
 @RestController
 @RequestMapping("/history")
@@ -21,18 +22,16 @@ public class HistoryController {
     @Autowired
     private HistoryService historyService;
 
-    @Autowired
-    private XmlParser xmlParser;
-
     @PostMapping("/import")
     public void importFiles(@RequestParam MultipartFile[] files) throws IOException, ParserConfigurationException, SAXException {
         for (MultipartFile file : files) {
-            xmlParser.parseXml(file.getInputStream());
+            List<HistoryDto> historyDto = parseHistory(file.getInputStream());
+            historyService.importAll(historyDto);
         }
     }
 
     @PostMapping
-    public void create(@RequestBody HistoryDto historyDto) throws IOException, ParserConfigurationException, SAXException {
+    public void create(@RequestBody HistoryDto historyDto) {
         historyService.create(historyDto);
     }
 

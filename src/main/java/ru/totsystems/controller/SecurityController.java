@@ -8,17 +8,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.xml.sax.SAXException;
+import ru.totsystems.dto.HistoryDto;
 import ru.totsystems.dto.SecurityDto;
+import ru.totsystems.service.HistoryService;
 import ru.totsystems.service.SecurityService;
-import ru.totsystems.service.XmlParser;
 
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+
+import static ru.totsystems.service.XmlParser.parseHistory;
+import static ru.totsystems.service.XmlParser.parseSecurities;
 
 @RestController
 @RequestMapping("/securities")
@@ -28,41 +31,40 @@ public class SecurityController {
     private String xmlPath;
 
     @Autowired
-    private XmlParser xmlParser;
-
-    @Autowired
     private SecurityService securityService;
 
+    @Autowired
+    private HistoryService historyService;
+
     @EventListener(ApplicationReadyEvent.class)
-    public void autoImport() {
+    public void autoImport() throws IOException, ParserConfigurationException, SAXException {
         File folder = new File(xmlPath);
         File[] files = Objects.requireNonNull(folder.listFiles());
-        Arrays.stream(files).filter(file -> file.getName().contains("securities")).forEach(file -> {
-            try {
-                xmlParser.parseXml(new FileInputStream(file));
-            } catch (IOException | ParserConfigurationException | SAXException e) {
-                e.printStackTrace();
+        for (File file : files) {
+            if (file.getName().contains("securities")) {
+                List<SecurityDto> securitiesDto = parseSecurities(new FileInputStream(file));
+                securityService.importAll(securitiesDto);
             }
-        });
-        Arrays.stream(files).filter(file -> file.getName().contains("history")).forEach(file -> {
-            try {
-                xmlParser.parseXml(new FileInputStream(file));
-            } catch (IOException | ParserConfigurationException | SAXException e) {
-                e.printStackTrace();
+        }
+        for (File file : files) {
+            if (file.getName().contains("history")) {
+                List<HistoryDto> history = parseHistory(new FileInputStream(file));
+                historyService.importAll(history);
             }
-        });
+        }
     }
 
     @PostMapping("/import")
     public void importFiles(@RequestParam MultipartFile[] files) throws IOException, ParserConfigurationException, SAXException {
         for (MultipartFile file : files) {
-            xmlParser.parseXml(file.getInputStream());
+            List<SecurityDto> securitiesDto = parseSecurities(file.getInputStream());
+            securityService.importAll(securitiesDto);
         }
     }
 
     @PostMapping
     public void create(@RequestBody SecurityDto securityDto) {
-        securityService.createSecurity(securityDto);
+        securityService.create(securityDto);
     }
 
     @GetMapping(value = "/{secId}")
