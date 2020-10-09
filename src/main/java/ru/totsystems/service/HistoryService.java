@@ -90,6 +90,7 @@ public class HistoryService {
     public void update(Long id, HistoryDto newHistory) {
         History history = convertDtoToEntity(get(id));
 
+        history.setId(id);
         history.setBoardId(newHistory.getBoardId());
         history.setSecId(securityService.convertDtoToEntity(securityService.get(newHistory.getSecId())));
         history.setShortName(newHistory.getShortName());

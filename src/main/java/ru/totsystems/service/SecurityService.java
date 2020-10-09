@@ -17,7 +17,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static ru.totsystems.service.XmlParser.parseSecurities;
