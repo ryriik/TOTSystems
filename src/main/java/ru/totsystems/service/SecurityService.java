@@ -48,10 +48,9 @@ public class SecurityService {
     }
 
     public SecurityDto get(String secId) {
-//        Security security = securityRepository.findBySecId(secId)
-//                .orElse(loadSecurityFromMoex(secId));
-        Optional<Security> security = securityRepository.findBySecId(secId);
-        return convertEntityToDto(security.get());
+        Security security = securityRepository.findBySecId(secId)
+                .orElse(loadSecurityFromMoex(secId));
+        return convertEntityToDto(security);
     }
 
     public List<SecurityDto> getAll() {
