@@ -29,14 +29,13 @@ public class HistoryService {
         historyRepository.save(convertDtoToEntity(historyDto));
     }
 
-    public void importAll(List<HistoryDto> historyDto) {
-        List<History> historyList = historyDto.stream().map(this::convertDtoToEntity).collect(Collectors.toList());
-        List<History> uniqueHistory = historyList.stream()
-                .filter(history -> historyRepository.findAllByBoardIdAndSecIdAndTradeDate(
+    public void importAll(List<HistoryDto> historyDtoList) {
+        historyDtoList.stream()
+                .map(this::convertDtoToEntity)
+                .filter(history -> historyRepository.findByBoardIdAndSecIdAndTradeDate(
                         history.getBoardId(), history.getSecId(), history.getTradeDate())
                         .isEmpty())
-                .collect(Collectors.toList());
-        historyRepository.saveAll(uniqueHistory);
+                .forEach(historyRepository::save);
     }
 
     public HistoryDto get(Long id) {
@@ -71,19 +70,19 @@ public class HistoryService {
                 .collect(Collectors.toList());
     }
 
-    public List<?> getAllDop(String sortBy) {
+    public List<?> getAllMerged(String sortBy) {
         return historyRepository.findAllDop(Sort.by(sortBy));
     }
 
-    public List<?> getAllDopByEmitentTitle(String emitentTitle, String sortBy) {
+    public List<?> getAllMergedByEmitentTitle(String emitentTitle, String sortBy) {
         return historyRepository.findAllDopByEmitentTitle(emitentTitle, Sort.by(sortBy));
     }
 
-    public List<?> getAllDopByTradeDate(LocalDate tradeDate, String sortBy) {
+    public List<?> getAllMergedByTradeDate(LocalDate tradeDate, String sortBy) {
         return historyRepository.findAllDopByTradeDate(tradeDate, Sort.by(sortBy));
     }
 
-    public List<?> getAllDopByEmitentTitleAndTradeDate(String emitentTitle, LocalDate tradeDate, String sortBy) {
+    public List<?> getAllMergedByEmitentTitleAndTradeDate(String emitentTitle, LocalDate tradeDate, String sortBy) {
         return historyRepository.findAllDopByEmitentTitleAndTradeDate(emitentTitle, tradeDate, Sort.by(sortBy));
     }
 

@@ -57,7 +57,7 @@ public class HistoryController {
         return historyService.getAll();
     }
 
-    @GetMapping("/dop")
+    @GetMapping("/merged")
     public List<?> getDopTable(
             @RequestParam(required = false) String sort_by,
             @RequestParam(required = false) String emitent_title,
@@ -67,15 +67,15 @@ public class HistoryController {
             sort_by = "secId";
         }
         if ((emitent_title != null && !emitent_title.isEmpty()) && (trade_date != null && !trade_date.isEmpty())) {
-            return historyService.getAllDopByEmitentTitleAndTradeDate(emitent_title, LocalDate.parse(trade_date), sort_by);
+            return historyService.getAllMergedByEmitentTitleAndTradeDate(emitent_title, LocalDate.parse(trade_date), sort_by);
         }
         if (emitent_title != null && !emitent_title.isEmpty()) {
-            return historyService.getAllDopByEmitentTitle(emitent_title, sort_by);
+            return historyService.getAllMergedByEmitentTitle(emitent_title, sort_by);
         }
         if (trade_date != null && !trade_date.isEmpty()) {
-            return historyService.getAllDopByTradeDate(LocalDate.parse(trade_date), sort_by);
+            return historyService.getAllMergedByTradeDate(LocalDate.parse(trade_date), sort_by);
         }
-        return historyService.getAllDop(sort_by);
+        return historyService.getAllMerged(sort_by);
     }
 
     @PutMapping("/{id}")
