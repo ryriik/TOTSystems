@@ -53,6 +53,6 @@
 ### DELETE /history/{id}
 Удаление истории по id.
 
-### GET /history/dop?sort_by=""&emitent_title=""&trade_date=""
+### GET /history/merged?sort_by=""&emitent_title=""&trade_date=""
 Вывод всей истории с опциональными параметрами emitent_title и trade_date для фильтрации и sort_by для сортировки.
 Выводятся теги secid, regnumber, name, emitent_title, tradedate, numtrades, open, close (для п.4 задания).
