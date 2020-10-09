@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 public class HistoryDto {
 
+    private Long id;
     private String boardId;
     private String secId;
     private String shortName;
@@ -31,6 +32,14 @@ public class HistoryDto {
         this.close = close;
         this.low = low;
         this.high = high;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getBoardId() {

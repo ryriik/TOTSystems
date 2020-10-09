@@ -113,6 +113,7 @@ public class HistoryService {
 
     private HistoryDto convertEntityToDto(History history) {
         HistoryDto historyDto = new HistoryDto();
+        historyDto.setId(history.getId());
         historyDto.setBoardId(history.getBoardId());
         historyDto.setSecId(history.getSecId().getSecId());
         historyDto.setShortName(history.getShortName());
